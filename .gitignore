@@ -1,0 +1,42 @@
+# 构建产物与中间文件
+dist/
+build/
+*.spec
+*.exe
+*.zip
+
+# 运行期产物：里面可能有真实案件数据，绝不能进仓库
+out/
+verify-out/
+work/
+脱敏产物/
+脱敏交付包.zip
+脱敏对照表*.json
+crash.log
+
+# 测试样本的生成输出（样本本身是合成数据，可保留；生成物不保留）
+tests/samples/_*.png
+tests/samples/*.脱敏.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# 编辑器与系统
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 本地覆盖配置（可能含口令/路径）
+*.local.yaml
+*.local.json
+.env
+
+# 合成测试样本由 tests/make_samples.py 生成，不进仓库
+tests/samples/

@@ -1,0 +1,67 @@
+id: legal
+label: 法律文书（默认）
+description: >
+  面向起诉状、判决书、询问笔录、合同、卷宗等中文法律文书。
+  脱敏自然人身份与联系方式；保留案号、法院名、法人名称、金额、日期等公开或
+  逻辑必需信息。未成年人信息强制脱敏。
+
+actions:
+  # 强标识符 —— 全脱
+  ID_CARD: MASK_FULL
+  SUSPECT_ID: MASK_FULL
+  PHONE: MASK_FULL
+  TEL: MASK_FULL
+  BANK_CARD: MASK_FULL
+  EMAIL: MASK_FULL
+  IP_ADDR: MASK_FULL
+  PLATE: MASK_FULL
+  PASSPORT: MASK_FULL
+  HK_MO_PERMIT: MASK_FULL
+  IM_ACCOUNT: MASK_FULL
+  MAC_ADDR: MASK_FULL
+  LICENSE_NO: MASK_FULL
+  USCC: KEEP            # 法人标识，公开可查，保留
+  URL: KEEP
+
+  # 弱标识符
+  PERSON: MASK          # 张三 → 张某（法律行业惯例）
+  ADDRESS: GENERALIZE
+  COURT: KEEP
+  LAW_FIRM: MASK
+  ORG: KEEP             # 法人名称公开
+  DOB: GENERALIZE
+  DATE: KEEP
+  AMOUNT: KEEP
+  CASE_NO: KEEP
+  BANK_BRANCH: MASK
+
+  # 视觉
+  SEAL: MASK_FULL
+  QR_CODE: MASK_FULL
+  IMG_TEXT: MASK_FULL
+  FACE: KEEP
+  SIGNATURE: KEEP
+
+  # 自由裁量
+  MINOR_INFO: MASK
+  TRADE_SECRET: KEEP
+  MEDICAL: MASK_FULL
+  CUSTOM: MASK_FULL
+
+options:
+  # 地址泛化保留到第几级：1省 2市 3区县 4镇街 5村居 6路 7门牌 8楼栋室
+  address_level: 3
+  # 日期泛化保留到：year | month | day（DOB 用）
+  dob_level: year
+  # 姓名遮盖模式：surname（张某）| full（某）| pseudo（一致化假名）
+  person_mask_mode: surname
+  # 是否清理文档元数据
+  strip_metadata: true
+  # 是否接受所有修订并清除修订痕迹
+  accept_revisions: true
+  # 是否清除批注
+  strip_comments: true
+  # 启用视觉检测
+  vision: true
+  # 启用 OCR（扫描件/图片内文字）
+  ocr: true

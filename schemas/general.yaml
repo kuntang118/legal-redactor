@@ -1,0 +1,51 @@
+id: general
+label: 通用
+description: 与行业无关的常规 PII 脱敏。
+
+actions:
+  ID_CARD: MASK_FULL
+  SUSPECT_ID: MASK_FULL
+  PHONE: MASK_FULL
+  TEL: MASK_FULL
+  BANK_CARD: MASK_FULL
+  EMAIL: MASK_FULL
+  IP_ADDR: MASK_FULL
+  PLATE: MASK_FULL
+  PASSPORT: MASK_FULL
+  HK_MO_PERMIT: MASK_FULL
+  IM_ACCOUNT: MASK_FULL
+  MAC_ADDR: MASK_FULL
+  USCC: MASK_FULL
+  URL: KEEP
+
+  PERSON: MASK
+  ADDRESS: GENERALIZE
+  COURT: KEEP
+  LAW_FIRM: KEEP
+  ORG: KEEP
+  DOB: GENERALIZE
+  DATE: KEEP
+  AMOUNT: KEEP
+  CASE_NO: KEEP
+  BANK_BRANCH: MASK
+
+  SEAL: MASK_FULL
+  QR_CODE: MASK_FULL
+  IMG_TEXT: MASK_FULL
+  FACE: KEEP
+  SIGNATURE: KEEP
+
+  MINOR_INFO: MASK
+  TRADE_SECRET: KEEP
+  MEDICAL: MASK_FULL
+  CUSTOM: MASK_FULL
+
+options:
+  address_level: 2
+  dob_level: year
+  person_mask_mode: surname
+  strip_metadata: true
+  accept_revisions: true
+  strip_comments: false
+  vision: true
+  ocr: true

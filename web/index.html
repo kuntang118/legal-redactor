@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>法隐 · 法律文书脱敏复核台</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#fff; --line:#e3e6ea; --ink:#1b1f24; --ink2:#5b6570;
+  --ink3:#8b949e; --acc:#2f5fd0; --acc-bg:#eef3ff;
+  --ok:#1a7f4b; --ok-bg:#e7f6ed; --bad:#b3261e; --bad-bg:#fdecea;
+  --warn:#8a6100; --warn-bg:#fff6df;
+  --mark:#ffe9a8; --mark-off:#eceff2; --mark-sel:#ffd166;
+  --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:6px;
+  padding:6px 13px;transition:.12s}
+button:hover{border-color:#c3c9d1;background:#fafbfc}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.pri:hover{background:#274fb0}
+button.danger{color:var(--bad);border-color:#eac6c2}
+button.sm{padding:3px 9px;font-size:12.5px;border-radius:5px}
+select,input[type=text],input[type=password]{border:1px solid var(--line);border-radius:6px;
+  padding:5px 9px;background:#fff}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+
+header{display:flex;align-items:center;gap:10px 14px;padding:10px 18px;background:var(--panel);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-wrap:wrap}
+header h1{font-size:15.5px;margin:0;font-weight:650;letter-spacing:.3px;white-space:nowrap}
+header .sub{color:var(--ink3);font-size:12px;white-space:nowrap}
+header .sp{flex:1;min-width:8px}
+header label{font-size:12px;color:var(--ink2);white-space:nowrap}
+header select{max-width:250px}
+button{white-space:nowrap}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11.5px;
+  background:var(--acc-bg);color:var(--acc);border:1px solid #d6e1fb}
+.badge.ok{background:var(--ok-bg);color:var(--ok);border-color:#bfe4cd}
+.badge.bad{background:var(--bad-bg);color:var(--bad);border-color:#f2cdc9}
+.badge.warn{background:var(--warn-bg);color:var(--warn);border-color:#f0dfae}
+
+main{display:grid;grid-template-columns:270px 1fr 320px;gap:12px;padding:12px 14px;
+  align-items:start;max-width:1900px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.card>h2{margin:0;padding:9px 13px;font-size:12.5px;font-weight:650;color:var(--ink2);
+  border-bottom:1px solid var(--line);background:#fafbfc;letter-spacing:.4px;
+  display:flex;align-items:center;gap:8px}
+.card>h2 .sp{flex:1}
+.card .bd{padding:11px 13px}
+.col{display:flex;flex-direction:column;gap:12px}
+
+/* 文件列表 */
+.filelist{max-height:330px;overflow:auto}
+.fitem{padding:8px 13px;border-bottom:1px solid #f0f2f4;cursor:pointer;display:flex;
+  gap:8px;align-items:center}
+.fitem:hover{background:#f8f9fb}
+.fitem.on{background:var(--acc-bg);box-shadow:inset 3px 0 0 var(--acc)}
+.fitem .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fitem .n{font-size:11.5px;color:var(--ink3);font-family:var(--mono);white-space:nowrap}
+.fitem .x{color:#c0c6cc;font-size:15px;line-height:1;padding:0 3px;border-radius:4px;
+  cursor:pointer;flex:none}
+.fitem .x:hover{background:var(--bad-bg);color:var(--bad)}
+
+/* 正文 */
+.doc{max-height:calc(100vh - 190px);overflow:auto;padding:16px 20px;
+  font-family:"Songti SC",SimSun,serif;font-size:14.5px;line-height:2.05;white-space:pre-wrap;
+  word-break:break-word}
+.doc .blk{margin-bottom:2px}
+.doc .blkid{font-family:var(--mono);font-size:10.5px;color:#c0c6cc;user-select:none;
+  margin-right:6px}
+mark{background:var(--mark);border-radius:3px;padding:0 1px;cursor:pointer;
+  border-bottom:2px solid #e0b84a}
+mark.off{background:var(--mark-off);border-bottom:2px solid #cfd5db;color:var(--ink2)}
+mark.sel{background:var(--mark-sel);box-shadow:0 0 0 2px #f0b429}
+mark.esc{border-bottom-style:dotted}
+
+/* 实体表 */
+.tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);
+  flex-wrap:wrap;background:#fafbfc}
+.tab{padding:3px 9px;border-radius:12px;font-size:12px;border:1px solid var(--line);
+  background:#fff;cursor:pointer}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.elist{max-height:calc(100vh - 260px);overflow:auto}
+.eitem{padding:8px 12px;border-bottom:1px solid #f0f2f4;cursor:pointer}
+.eitem:hover{background:#f8f9fb}
+.eitem.on{background:var(--acc-bg)}
+.eitem .r1{display:flex;gap:6px;align-items:baseline}
+.eitem .v{font-family:var(--mono);font-size:12.5px;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.eitem .t{font-size:11px;color:var(--ink3);white-space:nowrap}
+.eitem .r2{font-size:11.5px;color:var(--ink3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eitem .ctx{font-size:11.5px;color:var(--ink2);margin-top:3px;font-family:var(--mono);
+  word-break:break-all;max-height:32px;overflow:hidden}
+
+/* 详情抽屉 */
+.pop{position:fixed;right:16px;bottom:16px;width:340px;background:#fff;
+  border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.16);
+  z-index:60;display:none}
+.pop.on{display:block}
+.pop h3{margin:0;padding:10px 13px;font-size:13px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;background:#fafbfc}
+.pop .bd{padding:11px 13px;font-size:12.5px;max-height:44vh;overflow:auto}
+.pop .kv{display:grid;grid-template-columns:74px 1fr;gap:4px 8px;margin-bottom:9px}
+.pop .kv b{color:var(--ink3);font-weight:500}
+.pop .acts{display:flex;gap:6px;padding:10px 13px;border-top:1px solid var(--line);
+  background:#fafbfc;flex-wrap:wrap}
+
+/* 结果 */
+.res{font-size:12.5px}
+.chk{display:grid;grid-template-columns:16px 1fr;gap:7px;padding:5px 0;
+  border-bottom:1px solid #f2f4f6}
+.chk .ic{text-align:center}
+.chk .d{color:var(--ink3);font-size:11.5px}
+table.tt{width:100%;border-collapse:collapse;font-size:12px}
+table.tt th,table.tt td{text-align:left;padding:5px 7px;border-bottom:1px solid #eef0f2;
+  vertical-align:top}
+table.tt th{color:var(--ink3);font-weight:600;background:#fafbfc}
+.hint{color:var(--ink3);font-size:12px;line-height:1.7}
+.warnbox{background:var(--warn-bg);border-left:3px solid #e6c469;padding:8px 11px;
+  border-radius:4px;font-size:12.5px;margin:8px 0}
+.errbox{background:var(--bad-bg);border-left:3px solid #e2a49e;padding:8px 11px;
+  border-radius:4px;font-size:12.5px;margin:8px 0}
+.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--ink3)}
+.hr{height:1px;background:var(--line);margin:10px 0}
+#drop{border:1.5px dashed #c8ced6;border-radius:8px;padding:16px;text-align:center;
+  color:var(--ink3);font-size:12.5px;cursor:pointer}
+#drop.over{border-color:var(--acc);background:var(--acc-bg);color:var(--acc)}
+.browsetree{max-height:250px;overflow:auto;font-size:12.5px}
+.browsetree div{padding:3px 6px;cursor:pointer;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.browsetree div:hover{background:var(--acc-bg)}
+.browsetree div.dis{color:#c0c6cc;cursor:not-allowed}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #cfd5db;
+  border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.bar{position:fixed;top:0;left:0;height:2px;background:var(--acc);width:0;z-index:99;
+  transition:width .25s}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+
+<header>
+  <h1>法隐 · 法律文书脱敏复核台</h1>
+  <span class="sub">纯本地运行 · 真删除 · 残留自检</span>
+  <span class="sp"></span>
+  <label class="sub">预设</label>
+  <select id="preset"></select>
+  <span id="env" class="sub"></span>
+  <button id="btnScan" class="pri">扫描</button>
+  <button id="btnRedact" disabled>脱敏并自检</button>
+  <button id="btnReset" class="danger sm">清空会话</button>
+</header>
+
+<main>
+  <!-- 左：文件 -->
+  <div class="col">
+    <div class="card">
+      <h2>文件 <span class="sp"></span><span id="fcount" class="badge">0</span></h2>
+      <div class="bd">
+        <div id="drop">拖入文件，或点击从本机目录选取</div>
+        <input type="file" id="fileinp" multiple style="display:none">
+        <div class="hr"></div>
+        <div class="row">
+          <input type="text" id="pathinp" placeholder="本机路径，可填目录" style="flex:1;min-width:0">
+          <button class="sm" id="btnBrowse">浏览</button>
+          <button class="sm" id="btnPick">加入</button>
+        </div>
+        <div class="browsetree" id="tree" style="display:none"></div>
+      </div>
+      <div class="filelist" id="files"></div>
+    </div>
+
+    <div class="card">
+      <h2>批次统计</h2>
+      <div class="bd" id="stats"><span class="hint">扫描后显示</span></div>
+    </div>
+
+    <div class="card">
+      <h2>对照表口令</h2>
+      <div class="bd">
+        <div class="row">
+          <input type="password" id="mappass" placeholder="留空则明文写到 report/" style="flex:1;min-width:0">
+        </div>
+        <p class="hint" style="margin:7px 0 0">对照表是还原钥匙。填口令则 AES 加密后放进产物目录；
+          留空则以明文写到 report/ 下（不在交付目录里），别跟产物一起发出去。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中：正文 -->
+  <div class="col">
+    <div class="card">
+      <h2 id="doctitle">正文 <span class="sp"></span>
+        <span class="hint" id="docmeta"></span></h2>
+      <div class="doc" id="doc"><span class="hint">先在左侧加入文件并点「扫描」。</span></div>
+    </div>
+  </div>
+
+  <!-- 右：实体 / 视觉 / 结果 -->
+  <div class="col">
+    <div class="card">
+      <h2>检出实体 <span class="sp"></span>
+        <button class="sm" id="btnAllOn">全部采纳</button>
+        <button class="sm" id="btnAllOff">全部忽略</button>
+      </h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="elist" id="elist"><span class="hint" style="padding:10px 13px;display:block">尚未扫描</span></div>
+    </div>
+
+    <div class="card" id="boxcard" style="display:none">
+      <h2>视觉区域 <span class="sp"></span><span id="boxcount" class="badge">0</span></h2>
+      <div class="elist" id="boxlist" style="max-height:230px"></div>
+    </div>
+
+    <div class="card" id="rescard" style="display:none">
+      <h2>脱敏结果与自检 <span class="sp"></span><span id="resbadge"></span></h2>
+      <div class="bd res" id="res"></div>
+    </div>
+  </div>
+</main>
+
+<!-- 详情 -->
+<div class="pop" id="pop">
+  <h3><span id="popTitle">实体</span><span class="sp" style="flex:1"></span>
+    <button class="sm" id="popClose">关闭</button></h3>
+  <div class="bd" id="popBody"></div>
+  <div class="acts" id="popActs"></div>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const S = {
+  sid: null, presets: [], preset: 'legal', types: {}, strategies: [],
+  files: [],            // 客户端权威文件清单：[{id,name,size}]，加入即写入
+  scanById: {},         // 扫描结果按 id 存，不覆盖 files
+  cur: null, decisions: {}, results: null,
+  filter: 'ALL', busy: false
+};
+
+// ---------- 基础设施 ----------
+function bar(p){ $('#bar').style.width = (p == null ? 0 : p) + '%'; }
+async function api(path, opts = {}){
+  const o = Object.assign({headers:{}}, opts);
+  o.headers['X-Session'] = S.sid || '';
+  if (o.body && typeof o.body === 'object' && !(o.body instanceof Blob) && !(o.body instanceof ArrayBuffer)){
+    o.body = JSON.stringify(o.body);
+    o.headers['Content-Type'] = 'application/json';
+  }
+  const r = await fetch(path, o);
+  let j;
+  try { j = await r.json(); } catch(e){ throw new Error('服务端返回非 JSON：' + r.status); }
+  if (!r.ok || j.ok === false) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+function busy(on, label){
+  S.busy = on;
+  const has = S.files.length > 0;
+  $('#btnScan').disabled = on || !has;
+  $('#btnRedact').disabled = on || !has || !Object.keys(S.scanById).length;
+  if (on) bar(30); else bar(0);
+  document.body.style.cursor = on ? 'progress' : '';
+}
+function note(msg, bad){
+  const el = document.createElement('div');
+  el.className = bad ? 'errbox' : 'warnbox';
+  el.textContent = msg;
+  $('#doc').prepend(el);
+  setTimeout(()=>el.remove(), 9000);
+}
+
+// ---------- 初始化 ----------
+async function init(){
+  try{
+    const [pj, tj, sj, hj] = await Promise.all([
+      api('/api/presets'), api('/api/types'), api('/api/strategies'), api('/api/health')
+    ]);
+    S.presets = pj.presets; S.types = tj.labels; S.strategies = sj.strategies;
+    $('#preset').innerHTML = S.presets.map(p =>
+      `<option value="${esc(p.id)}">${esc(p.label)}（脱敏 ${p.n_redacted} 类）</option>`).join('');
+    S.preset = S.presets.some(p=>p.id==='legal') ? 'legal' : (S.presets[0]||{}).id;
+    $('#preset').value = S.preset;
+    const miss = [];
+    if (!hj.cv2) miss.push('OpenCV（印章/图片）');
+    if (!hj.ocr) miss.push('RapidOCR（扫描件）');
+    if (!hj.pymupdf) miss.push('PyMuPDF（PDF 真删除）');
+    $('#env').innerHTML = miss.length
+      ? `<span class="badge warn">缺 ${esc(miss.join('、'))}</span>`
+      : `<span class="badge ok">依赖齐备</span>`;
+    const s = await api('/api/session', {method:'POST', body:{preset:S.preset}});
+    S.sid = s.session;
+    $('#btnScan').disabled = true;
+  }catch(e){
+    $('#doc').innerHTML = `<div class="errbox">初始化失败：${esc(e.message)}</div>`;
+  }
+}
+
+// ---------- 文件加入 ----------
+$('#drop').onclick = ()=> $('#fileinp').click();
+$('#fileinp').onchange = e => uploadFiles(Array.from(e.target.files));
+['dragenter','dragover'].forEach(ev=> $('#drop').addEventListener(ev, e=>{
+  e.preventDefault(); $('#drop').classList.add('over'); }));
+['dragleave','drop'].forEach(ev=> $('#drop').addEventListener(ev, e=>{
+  e.preventDefault(); $('#drop').classList.remove('over'); }));
+$('#drop').addEventListener('drop', e=> uploadFiles(Array.from(e.dataTransfer.files)));
+
+async function uploadFiles(list){
+  if (!list.length) return;
+  busy(true);
+  let ok = 0, fail = 0;
+  for (const f of list){
+    try{
+      const buf = await f.arrayBuffer();
+      const r = await fetch('/api/upload?session=' + S.sid, {
+        method:'POST', headers:{'X-Filename':encodeURIComponent(f.name),
+          'X-Session':S.sid, 'Content-Type':'application/octet-stream'}, body: buf});
+      const j = await r.json();
+      if (j.ok === false) { note(`${f.name}：${j.error}`, true); fail++; continue; }
+      addFile({id:j.id, name:j.name, size:j.size});   // 关键：加入即进客户端清单
+      ok++;
+    }catch(e){ note(`${f.name}：${e.message}`, true); fail++; }
+  }
+  busy(false);
+  invalidateScans();
+  render();
+  note(ok ? `已加入 ${ok} 个文件${fail?`，失败 ${fail} 个`:''}` : '没有文件加入成功', fail>0);
+}
+
+$('#btnBrowse').onclick = async ()=>{
+  const t = $('#tree');
+  if (t.style.display !== 'none'){ t.style.display='none'; return; }
+  t.style.display='block';
+  await browse($('#pathinp').value || '.');
+};
+async function browse(p){
+  try{
+    const j = await api('/api/listdir?path=' + encodeURIComponent(p));
+    $('#pathinp').value = j.path;
+    const rows = [];
+    if (j.parent) rows.push(`<div data-p="${esc(j.parent)}">⬆ 上一级</div>`);
+    for (const it of j.items){
+      const dis = (!it.dir && !it.supported) || it.refused;
+      rows.push(`<div class="${dis?'dis':''}" data-p="${esc(it.path)}" data-dir="${it.dir?1:0}"
+        title="${esc(it.refused || it.path)}">${it.dir?'📁':'📄'} ${esc(it.name)}
+        ${it.dir?'':`<span class="muted">${(it.size/1024).toFixed(0)}K</span>`}</div>`);
+    }
+    $('#tree').innerHTML = rows.join('') || '<div class="muted">空目录</div>';
+    $$('#tree div').forEach(d=> d.onclick = ()=>{
+      if (d.classList.contains('dis')) return;
+      if (d.dataset.dir === '1') browse(d.dataset.p);
+      else { $('#pathinp').value = d.dataset.p; }
+    });
+  }catch(e){ $('#tree').innerHTML = `<div class="muted">${esc(e.message)}</div>`; }
+}
+$('#btnPick').onclick = async ()=>{
+  const p = $('#pathinp').value.trim();
+  if (!p) return;
+  busy(true);
+  let addedN = 0, refusedN = 0;
+  try{
+    const j = await api('/api/pick', {method:'POST', body:{paths:[p], recursive:true}});
+    (j.refused||[]).forEach(r=>{ note(`${r.name}：${r.why}`, true); refusedN++; });
+    (j.added||[]).forEach(a=>{ addFile(a); addedN++; });
+    if (!addedN && !refusedN) note('该路径下没有可处理的文件', true);
+  }catch(e){ note(e.message, true); }
+  invalidateScans();
+  busy(false);
+  render();
+  if (addedN) note(`已加入 ${addedN} 个文件${refusedN?`，${refusedN} 个被拒绝`:''}`);
+};
+
+// ---------- 文件清单：客户端权威，扫描结果另存 ----------
+function addFile(a){
+  if (!a || !a.id) return;
+  if (!S.files.some(f=>f.id===a.id))
+    S.files.push({id:a.id, name:a.name, size:a.size||0});
+  if (!S.cur) S.cur = a.id;
+}
+function removeFile(id){
+  S.files = S.files.filter(f=>f.id!==id);
+  delete S.scanById[id];
+  delete S.decisions[id];
+  if (S.cur === id) S.cur = (S.files[0]||{}).id || null;
+  render();
+}
+function invalidateScans(){        // 文件集合变了，旧扫描结果不再一致
+  const ids = new Set(S.files.map(f=>f.id));
+  Object.keys(S.scanById).forEach(k=>{ if (!ids.has(k)) delete S.scanById[k]; });
+  S.stats = null; S.mapping = null;
+}
+
+function refreshList(){
+  $('#fcount').textContent = S.files.length;
+  $('#files').innerHTML = S.files.map(f=>{
+    const sc = S.scanById[f.id];
+    const badge = sc ? `${sc.n_spans} 项${sc.n_boxes?` · ${sc.n_boxes} 图`:''}`
+                     : '<span class="muted">未扫描</span>';
+    return `<div class="fitem ${S.cur===f.id?'on':''}" data-id="${esc(f.id)}">
+      <span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>
+      <span class="n">${badge}</span>
+      <span class="x" data-rm="${esc(f.id)}" title="移除">×</span>
+    </div>`;
+  }).join('') || '<div class="bd hint">还没有文件。拖进来，或在上面填本机路径点「加入」。</div>';
+  $$('.fitem').forEach(el=> el.onclick = (ev)=>{
+    const rm = ev.target.dataset && ev.target.dataset.rm;
+    if (rm){ ev.stopPropagation(); removeFile(rm); return; }
+    S.cur = el.dataset.id; S.filter='ALL'; render();
+  });
+  const has = S.files.length > 0;
+  $('#btnScan').disabled = S.busy || !has;
+  $('#btnRedact').disabled = S.busy || !has || !Object.keys(S.scanById).length;
+}
+
+// ---------- 扫描 ----------
+$('#preset').onchange = async e=>{
+  S.preset = e.target.value;
+  try{
+    const s = await api('/api/session', {method:'POST', body:{preset:S.preset}});
+    S.sid = s.session;
+  }catch(err){ note('切换预设失败：' + err.message, true); return; }
+  S.files = []; S.scanById = {}; S.cur = null; S.decisions = {};
+  S.stats = null; S.mapping = null;
+  render();
+  note('已切换预设并新建会话，请重新加入文件');
+};
+$('#btnScan').onclick = async ()=>{
+  if (!S.files.length){ note('还没有文件', true); return; }
+  busy(true); bar(45);
+  try{
+    const j = await api('/api/scan', {method:'POST', body:{preset:S.preset}});
+    S.scanById = {};
+    (j.files||[]).forEach(f=>{
+      S.scanById[f.id] = f;
+      S.decisions[f.id] = S.decisions[f.id] ||
+        {spans:{}, boxes:{}, extra_spans:[], extra_names:[]};
+      if (!S.files.some(x=>x.id===f.id))
+        S.files.push({id:f.id, name:f.name, size:f.size||0});
+    });
+    S.stats = j.stats; S.mapping = j.mapping;
+    (j.errors||[]).forEach(e=> note(`${e.name}：${e.error}`, true));
+    if (!S.cur || !S.files.some(f=>f.id===S.cur)) S.cur = (S.files[0]||{}).id;
+    render(); renderStats();
+    const scanned = (j.files||[]).length;
+    const tot = (j.files||[]).reduce((a,f)=>a+f.n_spans,0);
+    const missing = S.files.length - scanned;
+    note(`扫描完成：${scanned} 个文件共 ${tot} 处检出`
+         + (missing>0 ? `；${missing} 个文件未产出结果` : ''), missing>0);
+  }catch(e){ note('扫描失败：' + e.message, true); }
+  busy(false);
+};
+
+function renderStats(){
+  const st = S.stats;
+  if (!st) { $('#stats').innerHTML = '<span class="hint">扫描后显示</span>'; return; }
+  const rows = Object.entries(st.by_type||{}).map(([k,v])=>
+    `<div class="row" style="justify-content:space-between">
+      <span>${esc(S.types[k]||k)}</span><span class="mono">${v}</span></div>`).join('');
+  $('#stats').innerHTML = `
+    <div class="row" style="justify-content:space-between"><b>唯一实体</b>
+      <span class="mono">${st.unique_entities}</span></div>
+    <div class="row" style="justify-content:space-between"><b>出现次数</b>
+      <span class="mono">${st.total_occurrences}</span></div>
+    <div class="row" style="justify-content:space-between"><b>强制升级</b>
+      <span class="mono">${st.escalated}</span></div>
+    <div class="hr"></div>${rows}`;
+}
+
+// ---------- 渲染 ----------
+function curFile(){
+  // 返回当前文件的**扫描结果**；没扫描过返回 null（正文区显示占位提示）
+  const meta = S.files.find(f=>f.id===S.cur);
+  if (!meta) return null;
+  const sc = S.scanById[S.cur];
+  if (!sc) return Object.assign({__unscanned:true, blocks:{}, spans:[], boxes:[],
+                                 n_spans:0, n_boxes:0, fmt:'?', warnings:[]}, meta);
+  return sc;
+}
+function dec(){ return S.decisions[S.cur] || {spans:{},boxes:{},extra_spans:[],extra_names:[]}; }
+
+function render(){
+  refreshList();
+  const f = curFile();
+  if (!f){
+    $('#doctitle').firstChild.textContent = '正文 ';
+    $('#docmeta').textContent = '';
+    $('#doc').innerHTML = '<span class="hint">先在左侧加入文件并点「扫描」。</span>';
+    $('#elist').innerHTML='<span class="hint" style="padding:10px 13px;display:block">尚未扫描</span>';
+    $('#tabs').innerHTML=''; $('#boxcard').style.display='none';
+    return;
+  }
+  if (f.__unscanned){
+    $('#doctitle').firstChild.textContent = '正文 · ' + f.name + ' ';
+    $('#docmeta').textContent = '未扫描';
+    $('#doc').innerHTML = '<span class="hint">这个文件还没扫描。点顶部「扫描」。</span>';
+    $('#elist').innerHTML='<span class="hint" style="padding:10px 13px;display:block">尚未扫描</span>';
+    $('#tabs').innerHTML=''; $('#boxcard').style.display='none';
+    return;
+  }
+  $('#doctitle').firstChild.textContent = '正文 · ' + f.name + ' ';
+  $('#docmeta').textContent = `${f.fmt} · ${f.n_spans} 处检出 · ${f.n_boxes} 个视觉区域`;
+  renderDoc(f); renderTabs(f); renderList(f); renderBoxes(f);
+  const wb = $('#doc').querySelectorAll('.warnbox').length;
+  if (f.warnings && f.warnings.length && !wb){
+    const d = document.createElement('div'); d.className='warnbox';
+    d.innerHTML = '<b>注意</b><br>' + f.warnings.map(esc).join('<br>');
+    $('#doc').prepend(d);
+  }
+}
+
+function spanState(sp){
+  const d = dec().spans[sp.span_id] || {};
+  return {action: d.action || sp.action || 'auto', strategy: d.strategy || sp.strategy || ''};
+}
+
+function renderDoc(f){
+  const host = $('#doc');
+  const old = host.querySelectorAll('.warnbox,.errbox');
+  host.innerHTML = '';
+  old.forEach(n=> host.appendChild(n));
+  const byBlock = {};
+  for (const sp of f.spans){
+    if (sp.start===0 && sp.end===0) continue;
+    (byBlock[sp.block] = byBlock[sp.block] || []).push(sp);
+  }
+  const blockIds = Object.keys(f.blocks).sort();
+  const frag = document.createDocumentFragment();
+  for (const bid of blockIds){
+    const text = f.blocks[bid] || '';
+    if (!text.trim()) continue;
+    const wrap = document.createElement('div'); wrap.className='blk';
+    const tag = document.createElement('span'); tag.className='blkid'; tag.textContent = bid;
+    wrap.appendChild(tag);
+    const list = (byBlock[bid]||[]).slice().sort((a,b)=>a.start-b.start);
+    let pos = 0;
+    for (const sp of list){
+      if (sp.start < pos) continue;              // 跳过重叠
+      if (sp.start > pos) wrap.appendChild(document.createTextNode(text.slice(pos, sp.start)));
+      const m = document.createElement('mark');
+      const st = spanState(sp);
+      m.textContent = text.slice(sp.start, sp.end);
+      m.className = (st.action==='reject' ? 'off ' : '') + (sp.etype==='MINOR_INFO' ? 'esc' : '');
+      m.dataset.sid = sp.span_id;
+      m.title = `${S.types[sp.etype]||sp.etype} · 置信 ${(sp.confidence||0).toFixed(2)} · ${st.strategy||''}\n${sp.reason||''}`;
+      m.onclick = ()=> openPop(sp);
+      wrap.appendChild(m);
+      pos = sp.end;
+    }
+    if (pos < text.length) wrap.appendChild(document.createTextNode(text.slice(pos)));
+    frag.appendChild(wrap);
+  }
+  host.appendChild(frag);
+}
+
+function renderTabs(f){
+  const cnt = {};
+  for (const sp of f.spans) cnt[sp.etype] = (cnt[sp.etype]||0)+1;
+  const keys = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  $('#tabs').innerHTML =
+    `<span class="tab ${S.filter==='ALL'?'on':''}" data-k="ALL">全部 ${f.spans.length}</span>` +
+    keys.map(k=>`<span class="tab ${S.filter===k?'on':''}" data-k="${esc(k)}">
+      ${esc(S.types[k]||k)} ${cnt[k]}</span>`).join('');
+  $$('#tabs .tab').forEach(t=> t.onclick = ()=>{ S.filter = t.dataset.k; render(); });
+}
+
+function renderList(f){
+  const d = dec();
+  const list = f.spans.filter(sp=> S.filter==='ALL' || sp.etype===S.filter)
+                      .slice().sort((a,b)=> a.etype===b.etype
+                        ? (b.confidence||0)-(a.confidence||0)
+                        : String(a.etype).localeCompare(String(b.etype)));
+  $('#elist').innerHTML = list.map(sp=>{
+    const st = spanState(sp);
+    const rej = st.action==='reject';
+    return `<div class="eitem" data-sid="${esc(sp.span_id)}">
+      <div class="r1">
+        <span class="v" style="${rej?'text-decoration:line-through;color:#98a1ab':''}">${esc(sp.text)}</span>
+        <span class="t">${esc(S.types[sp.etype]||sp.etype)}</span>
+      </div>
+      <div class="r2">${rej?'<span class="badge">已忽略</span> ':''}
+        <span class="badge ${sp.confidence>=0.88?'ok':(sp.confidence>=0.7?'':'warn')}">
+        ${(sp.confidence||0).toFixed(2)}</span>
+        ${st.strategy?`<span class="muted">${esc(st.strategy)}</span>`:''}
+        ${sp.attrs&&sp.attrs.escalated?'<span class="badge bad">强制脱敏</span>':''}
+        ${sp.source==='manual'?'<span class="badge warn">人工</span>':''}
+        <span class="muted">${esc(sp.block||'')}</span></div>
+      <div class="ctx">${esc(sp.ctx||'')}</div>
+    </div>`;
+  }).join('') || '<div class="bd hint">这一类没有检出项</div>';
+  $$('#elist .eitem').forEach(el=> el.onclick = ()=>{
+    const sp = f.spans.find(x=>x.span_id===el.dataset.sid);
+    if (sp) openPop(sp);
+  });
+}
+
+function renderBoxes(f){
+  const boxes = f.boxes || [];
+  $('#boxcard').style.display = boxes.length ? '' : 'none';
+  $('#boxcount').textContent = boxes.length;
+  const d = dec();
+  $('#boxlist').innerHTML = boxes.map(b=>{
+    const rej = (d.boxes[b.box_id]||{}).action === 'reject';
+    return `<div class="eitem" data-bid="${esc(b.box_id)}">
+      <div class="r1"><span class="v">${esc(S.types[b.etype]||b.etype)}</span>
+        <span class="t">${esc(b.page_label||('第'+(b.page+1)+'页'))}</span></div>
+      <div class="r2">${rej?'<span class="badge">已忽略</span> ':''}
+        <span class="badge">${(b.confidence||0).toFixed(2)}</span>
+        <span class="muted mono">${Math.round(b.w)}×${Math.round(b.h)} @(${Math.round(b.x)},${Math.round(b.y)})</span></div>
+      <div class="ctx">${esc(b.reason||'')}${b.text?('\nOCR: '+b.text):''}</div>
+    </div>`;
+  }).join('');
+  $$('#boxlist .eitem').forEach(el=> el.onclick = ()=>{
+    const b = boxes.find(x=>x.box_id===el.dataset.bid);
+    if (!b) return;
+    const d2 = dec();
+    d2.boxes[b.box_id] = d2.boxes[b.box_id] || {};
+    d2.boxes[b.box_id].action = (d2.boxes[b.box_id].action==='reject') ? 'accept' : 'reject';
+    render();
+  });
+}
+
+// ---------- 详情抽屉 ----------
+let curSpan = null;
+function openPop(sp){
+  curSpan = sp;
+  $$('#doc mark').forEach(m=> m.classList.toggle('sel', m.dataset.sid===sp.span_id));
+  const st = spanState(sp);
+  $('#popTitle').textContent = `${S.types[sp.etype]||sp.etype}`;
+  const a = sp.attrs || {};
+  $('#popBody').innerHTML = `
+    <div class="kv">
+      <b>原文</b><span class="mono">${esc(sp.text)}</span>
+      <b>类型</b><span>${esc(sp.etype)}</span>
+      <b>置信度</b><span>${(sp.confidence||0).toFixed(2)}
+        ${sp.confidence<0.75?'<span class="badge warn">建议人工确认</span>':''}</span>
+      <b>位置</b><span class="mono">${esc(sp.block||'')} [${sp.start},${sp.end})</span>
+      <b>来源</b><span>${esc(sp.source||'')}</span>
+      <b>依据</b><span>${esc(sp.reason||'')}</span>
+      ${a.escalated?`<b>强制</b><span><span class="badge bad">被${esc(S.types[a.escalated_by]||a.escalated_by)}
+        区域升级，不允许弱脱敏</span></span>`:''}
+      ${a.path?`<b>识别路径</b><span>${esc({A:'角色触发词',B:'落款署名',C:'姓氏词典(低置信)',
+        D:'跨文档学习',T:'表格列头'}[a.path]||a.path)}</span>`:''}
+      ${a.role?`<b>角色词</b><span>${esc(a.role)}</span>`:''}
+      ${a.level_name?`<b>地址级别</b><span>${esc(a.level_name)}</span>`:''}
+    </div>
+    <div class="hr"></div>
+    <div class="row"><span class="muted">策略</span>
+      <select id="popStrat">${S.strategies.map(s=>
+        `<option value="${s}" ${s===st.strategy?'selected':''}>${s}</option>`).join('')}
+      </select></div>
+    <p class="hint" style="margin:8px 0 0">「忽略」= 这一处不脱敏（误报时用）。
+      改策略只影响这一处；要整类改请改预设 YAML。</p>`;
+  $('#popActs').innerHTML = `
+    <button class="sm pri" data-a="accept">采纳</button>
+    <button class="sm danger" data-a="reject">忽略（误报）</button>
+    <button class="sm" data-a="clear">恢复默认</button>`;
+  $$('#popActs button').forEach(b=> b.onclick = ()=>{
+    const d = dec();
+    d.spans[sp.span_id] = d.spans[sp.span_id] || {};
+    if (b.dataset.a === 'clear'){ delete d.spans[sp.span_id]; }
+    else {
+      d.spans[sp.span_id].action = b.dataset.a;
+      const sv = $('#popStrat').value;
+      if (sv && b.dataset.a === 'accept') d.spans[sp.span_id].strategy = sv;
+      if (b.dataset.a === 'reject') delete d.spans[sp.span_id].strategy;
+    }
+    closePop(); render();
+  });
+  $('#popStrat').onchange = e=>{
+    const d = dec(); d.spans[sp.span_id] = d.spans[sp.span_id] || {};
+    d.spans[sp.span_id].strategy = e.target.value;
+    d.spans[sp.span_id].action = d.spans[sp.span_id].action || 'accept';
+    render();
+  };
+  $('#pop').classList.add('on');
+}
+function closePop(){ $('#pop').classList.remove('on'); curSpan = null;
+  $$('#doc mark').forEach(m=> m.classList.remove('sel')); }
+$('#popClose').onclick = closePop;
+
+$('#btnAllOn').onclick = ()=>{ massSet('accept'); };
+$('#btnAllOff').onclick = ()=>{ massSet('reject'); };
+function massSet(action){
+  const f = curFile(); if (!f) return;
+  if (!confirm(`把当前筛选下（${S.filter==='ALL'?'全部':S.types[S.filter]||S.filter}）` +
+               `的检出项全部标为「${action==='accept'?'采纳':'忽略'}」？`)) return;
+  const d = dec();
+  for (const sp of f.spans){
+    if (S.filter!=='ALL' && sp.etype!==S.filter) continue;
+    if (sp.etype==='MINOR_INFO') continue;
+    d.spans[sp.span_id] = Object.assign({}, d.spans[sp.span_id], {action});
+  }
+  render();
+}
+
+// ---------- 脱敏 ----------
+$('#btnRedact').onclick = async ()=>{
+  busy(true); bar(55);
+  const pass = $('#mappass').value;
+  try{
+    const j = await api('/api/redact', {method:'POST',
+      body:{decisions:S.decisions, mapping_pass: pass || null}});
+    bar(90);
+    S.results = j; renderResults(j); renderStats();
+    S.stats = j.stats; renderStats();
+    note(`脱敏完成：${j.results.filter(r=>r.ok).length}/${j.results.length} 个文件产出`);
+  }catch(e){ note('脱敏失败：' + e.message, true); }
+  busy(false); bar(100); setTimeout(()=>bar(0), 600);
+};
+
+function renderResults(j){
+  $('#rescard').style.display = '';
+  const allPass = j.results.every(r=> r.ok && r.audit_passed);
+  $('#resbadge').innerHTML = allPass
+    ? '<span class="badge ok">全部通过自检</span>'
+    : '<span class="badge bad">有文件未通过</span>';
+  const html = j.results.map(r=>{
+    if (!r.ok) return `<div class="errbox"><b>${esc(r.name)}</b>：${esc(r.error||'失败')}</div>`;
+    const dl = `/api/download/${encodeURIComponent(r.out)}?session=${S.sid}`;
+    const checks = (r.audit_checks||[]).map(c=>`
+      <div class="chk"><span class="ic">${c.passed?'✅':'❌'}</span>
+        <span><b>${esc(c.name)}</b><div class="d">${esc(c.detail)}</div></span></div>`).join('');
+    const res = (r.audit_residues||[]);
+    const SEVW = {critical:4,high:3,medium:2,low:1,info:0,waived:-1};
+    const real = res.filter(x=>x.severity!=='waived');
+    const waived = res.filter(x=>x.severity==='waived');
+    const sevBadge = s => `<span class="badge ${s==='critical'||s==='high'?'bad':
+      (s==='medium'?'warn':(s==='waived'?'':''))}">${esc({critical:'致命',high:'高',
+      medium:'中',low:'低',info:'提示',waived:'人工放行'}[s]||s)}</span>`;
+    const rowOf = x => `<tr><td>${sevBadge(x.severity)}</td>
+        <td>${esc(x.kind)}</td><td>${esc(S.types[x.etype]||x.etype)}</td>
+        <td class="mono">${esc(String(x.original).slice(0,24))}</td>
+        <td class="mono">${esc(String(x.found).slice(0,24))}</td>
+        <td class="mono">${esc(String(x.part).slice(0,28))}</td></tr>`;
+    const rrows = real.slice().sort((a,b)=>(SEVW[b.severity]||0)-(SEVW[a.severity]||0))
+                        .slice(0,25).map(rowOf).join('');
+    const wrows = waived.slice(0,25).map(rowOf).join('');
+    const rep = r.report||{};
+    return `<div style="margin-bottom:14px">
+      <div class="row" style="justify-content:space-between">
+        <b>${esc(r.name)}</b>
+        <span>${r.audit_passed?'<span class="badge ok">PASS</span>'
+          :'<span class="badge bad">FAIL</span>'}
+          <span class="muted">替换 ${r.replacements} 处</span></span>
+      </div>
+      <div class="row" style="margin:6px 0">
+        <a href="${dl}"><button class="sm pri">下载产物</button></a>
+        ${rep.html?`<a href="/api/download/${encodeURIComponent('report/'+rep.html)}?session=${S.sid}"
+          target="_blank"><button class="sm">审计报告 HTML</button></a>`:''}
+        ${rep.md?`<a href="/api/download/${encodeURIComponent('report/'+rep.md)}?session=${S.sid}"
+          target="_blank"><button class="sm">Markdown</button></a>`:''}
+      </div>
+      ${(r.warnings||[]).map(w=>`<div class="warnbox">${esc(w)}</div>`).join('')}
+      ${(r.audit_warnings||[]).map(w=>`<div class="warnbox">${esc(w)}</div>`).join('')}
+      ${checks}
+      ${rrows?`<div class="hr"></div><b style="font-size:12.5px">残留 · 工具未处理</b>
+        <table class="tt"><tr><th>级</th><th>种类</th><th>类型</th>
+        <th>原值</th><th>命中</th><th>位置</th></tr>${rrows}</table>
+        ${real.length>25?`<div class="hint">另有 ${real.length-25} 条，见完整报告</div>`:''}`
+        :'<div class="hint" style="margin-top:6px">工具未处理的残留：0</div>'}
+      ${wrows?`<div class="hr"></div><b style="font-size:12.5px">人工放行清单</b>
+        <div class="hint">复核时标记「忽略」的项，工具按指示未脱敏。不算工具失误，
+        但交付前请逐条确认有依据。</div>
+        <table class="tt"><tr><th>级</th><th>种类</th><th>类型</th>
+        <th>原值</th><th>命中</th><th>位置</th></tr>${wrows}</table>`:''}
+    </div>`;
+  }).join('');
+  const m = j.mapping||{};
+  $('#res').innerHTML = html + `
+    <div class="hr"></div>
+    <div class="row" style="justify-content:space-between">
+      <span class="muted">对照表 ${m.records||0} 条（${esc(m.format||'')}）</span>
+      ${m.path?`<a href="/api/download/${encodeURIComponent(
+          (m.format==='encrypted'?'out/':'report/')+ (m.path.split(/[\\\\/]/).pop())
+        )}?session=${S.sid}"><button class="sm">下载对照表</button></a>`:''}
+    </div>
+    ${m.note?`<div class="warnbox">${esc(m.note)}</div>`:''}`;
+}
+
+$('#btnReset').onclick = async ()=>{
+  if (!confirm('清空当前会话与临时文件？已加入的文件需要重新选取。')) return;
+  try{ await api('/api/reset', {method:'POST', body:{}}); }catch(e){}
+  try{
+    const s = await api('/api/session', {method:'POST', body:{preset:S.preset}});
+    S.sid = s.session;
+  }catch(e){ note('新建会话失败：' + e.message, true); return; }
+  S.files=[]; S.scanById={}; S.cur=null; S.decisions={};
+  S.stats=null; S.mapping=null; S.results=null;
+  $('#rescard').style.display='none'; $('#boxcard').style.display='none';
+  $('#resbadge').innerHTML='';
+  $('#stats').innerHTML='<span class="hint">扫描后显示</span>';
+  $('#mappass').value='';
+  render();
+  note('会话已清空');
+};
+
+init();
+</script>
+</body>
+</html>

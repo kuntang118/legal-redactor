@@ -1,0 +1,52 @@
+id: litigation_internal
+label: 卷宗内部共享
+description: >
+  用于所内/团队内部共享卷宗。保留当事人姓名与地址以便办案，
+  只脱敏证件号与联系方式这类"外流即可被直接滥用"的字段。
+
+actions:
+  ID_CARD: MASK_FULL
+  SUSPECT_ID: MASK_FULL
+  PHONE: PARTIAL        # 138****8000
+  TEL: PARTIAL
+  BANK_CARD: PARTIAL    # 保留后4位
+  EMAIL: MASK_FULL
+  IP_ADDR: KEEP
+  PLATE: KEEP
+  PASSPORT: MASK_FULL
+  HK_MO_PERMIT: MASK_FULL
+  IM_ACCOUNT: MASK_FULL
+  MAC_ADDR: KEEP
+  USCC: KEEP
+  URL: KEEP
+
+  PERSON: KEEP
+  ADDRESS: KEEP
+  COURT: KEEP
+  LAW_FIRM: KEEP
+  ORG: KEEP
+  DOB: KEEP
+  DATE: KEEP
+  AMOUNT: KEEP
+  CASE_NO: KEEP
+  BANK_BRANCH: KEEP
+
+  SEAL: KEEP
+  QR_CODE: MASK_FULL
+  IMG_TEXT: KEEP
+  FACE: KEEP
+  SIGNATURE: KEEP
+
+  MINOR_INFO: MASK
+  TRADE_SECRET: KEEP
+  MEDICAL: KEEP
+  CUSTOM: MASK_FULL
+
+options:
+  strip_metadata: false
+  accept_revisions: false
+  strip_comments: false
+  vision: false
+  ocr: false
+  phone_keep: "head3_tail0"
+  bank_keep_tail: 4

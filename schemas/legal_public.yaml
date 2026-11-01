@@ -1,0 +1,62 @@
+id: legal_public
+label: 裁判文书上网版
+description: >
+  比 legal 更严。用于对外公开/上网公布的裁判文书。
+  在 legal 基础上追加：法定代表人姓名脱敏、自然人相关金额泛化、
+  住址泛化到区县级、开庭与出生日期只保留年份。
+  对应《最高人民法院关于人民法院在互联网公布裁判文书的规定》的删除处理要求。
+
+actions:
+  ID_CARD: MASK_FULL
+  SUSPECT_ID: MASK_FULL
+  PHONE: MASK_FULL
+  TEL: MASK_FULL
+  BANK_CARD: MASK_FULL
+  EMAIL: MASK_FULL
+  IP_ADDR: MASK_FULL
+  PLATE: MASK_FULL
+  PASSPORT: MASK_FULL
+  HK_MO_PERMIT: MASK_FULL
+  IM_ACCOUNT: MASK_FULL
+  MAC_ADDR: MASK_FULL
+  LICENSE_NO: MASK_FULL
+  USCC: KEEP
+  URL: KEEP
+
+  PERSON: MASK
+  ADDRESS: GENERALIZE
+  COURT: KEEP
+  LAW_FIRM: MASK
+  ORG: KEEP
+  DOB: GENERALIZE
+  DATE: GENERALIZE
+  AMOUNT: GENERALIZE
+  CASE_NO: KEEP
+  BANK_BRANCH: MASK_FULL
+
+  SEAL: MASK_FULL
+  QR_CODE: MASK_FULL
+  IMG_TEXT: MASK_FULL
+  FACE: MASK_FULL
+  SIGNATURE: MASK_FULL
+
+  MINOR_INFO: MASK
+  TRADE_SECRET: DELETE
+  MEDICAL: MASK_FULL
+  CUSTOM: MASK_FULL
+
+options:
+  address_level: 3
+  dob_level: year
+  date_level: year
+  amount_mode: range          # 金额→区间（1万-5万元）
+  person_mask_mode: surname
+  mask_judicial_staff: true   # 审判员/书记员姓名也脱敏
+  mask_legal_rep: true        # 法定代表人姓名脱敏
+  strip_metadata: true
+  accept_revisions: true
+  strip_comments: true
+  vision: true
+  ocr: true
+  # 组合重识别风险提示阈值：同一文档中准标识符种类数 >= N 时告警
+  quasi_id_warn_threshold: 3
